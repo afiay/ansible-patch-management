@@ -1,0 +1,12 @@
+---
+# Governed End-to-End Network Assessment
+# Read-only network operations.
+# No remediation or router configuration changes.
+
+- import_playbook: discover.yml
+
+- import_playbook: assess.yml
+
+- import_playbook: risk_assessment.yml
+
+- import_playbook: advisory_assessment.yml

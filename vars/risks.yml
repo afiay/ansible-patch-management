@@ -1,0 +1,29 @@
+---
+risk_factors:
+  minimum: 1
+  maximum: 5
+
+risks:
+  - id: F01
+    title: Legacy Cisco IOS software
+    status: requires_review
+    evidence: "Cisco IOS 15.3(3)XB12"
+    impact: null
+    exposure: null
+    likelihood: null
+    criticality: null
+    owner: unassigned
+    recommendation: Verify Cisco advisories and support status.
+    approved: false
+
+  - id: F02
+    title: Legacy SSH cryptographic algorithms
+    status: confirmed
+    evidence: "Legacy SHA-1 key exchange and CBC encryption required"
+    impact: null
+    exposure: null
+    likelihood: null
+    criticality: null
+    owner: unassigned
+    recommendation: Restrict management access and plan modernization.
+    approved: false

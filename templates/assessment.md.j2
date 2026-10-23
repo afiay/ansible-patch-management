@@ -1,0 +1,52 @@
+# Network Security Assessment — {{ inventory_hostname }}
+
+Assessment date (UTC): {{ now(utc=true, fmt='%Y-%m-%d %H:%M:%S') }}
+
+## 1. Device Information
+
+Device: {{ inventory_hostname }}
+Management IP: {{ ansible_host }}
+
+Software:
+{{ assessment.stdout_lines[0][0] }}
+
+## 2. Network Interfaces
+
+{{ assessment.stdout[1] }}
+
+## 3. SSH Status
+
+{{ assessment.stdout_lines[2][0] }}
+
+## 4. Findings
+
+### F01 — Legacy IOS software
+
+Status: Requires review
+
+The device runs Cisco IOS 15.3(3)XB12.
+
+Action:
+- Verify the release against Cisco Security Advisories.
+- Check product and software support status.
+- Identify supported upgrade or replacement options.
+
+### F02 — Legacy SSH algorithms
+
+Status: Confirmed compatibility limitation
+
+The router requires legacy SSH algorithms for connections
+from the Ubuntu management server.
+
+Action:
+- Review SSH algorithm support.
+- Restrict management access to trusted systems.
+- Evaluate migration to a supported IOS platform.
+
+## 5. Assessment Decision
+
+Vulnerabilities confirmed: Not yet determined
+Remediation approved: No
+Configuration changes performed: No
+
+Next stage: Vulnerability correlation and prioritization.

@@ -1,0 +1,96 @@
+---
+- name: Network Risk Assessment
+  hosts: localhost
+  connection: local
+  gather_facts: false
+
+  vars_files:
+    - vars/risks.yml
+
+  tasks:
+    - name: Validate risk register
+      ansible.builtin.assert:
+        that:
+          - item.id is defined
+          - item.title is defined
+          - item.status is defined
+          - item.approved is defined
+          - item.impact is defined
+          - item.exposure is defined
+          - item.likelihood is defined
+          - item.criticality is defined
+        fail_msg: "Risk register entry is incomplete."
+      loop: "{{ risks }}"
+      loop_control:
+        label: "{{ item.id }}"
+
+    - name: Validate risk factor ranges
+      ansible.builtin.assert:
+        that:
+          - >-
+            item.0[item.1] is none or
+            (
+              item.0[item.1] is integer and
+              item.0[item.1] >= 1 and
+              item.0[item.1] <= 5
+            )
+        fail_msg: "Invalid risk factor in {{ item.0.id }}: {{ item.1 }}"
+        quiet: true
+      loop: "{{ risks | product(['impact', 'exposure', 'likelihood', 'criticality']) | list }}"
+      loop_control:
+        label: "{{ item.0.id }} - {{ item.1 }}"
+
+    - name: Display risk assessment
+      ansible.builtin.debug:
+        msg:
+          id: "{{ item.id }}"
+          finding: "{{ item.title }}"
+          status: "{{ item.status }}"
+          score: >-
+            {{
+              (item.impact + item.exposure
+               + item.likelihood + item.criticality)
+              if (
+                item.impact is not none
+                and item.exposure is not none
+                and item.likelihood is not none
+                and item.criticality is not none
+              )
+              else 'NOT ASSESSED'
+            }}
+          maximum_score: 20
+          priority: >-
+            {%- if item.impact is none or
+                   item.exposure is none or
+                   item.likelihood is none or
+                   item.criticality is none -%}
+            NOT ASSESSED
+            {%- else -%}
+              {%- set score = item.impact + item.exposure
+                             + item.likelihood + item.criticality -%}
+              {%- if score >= 16 -%}
+              CRITICAL
+              {%- elif score >= 12 -%}
+              HIGH
+              {%- elif score >= 8 -%}
+              MEDIUM
+              {%- else -%}
+              LOW
+              {%- endif -%}
+            {%- endif -%}
+          remediation_approved: "{{ item.approved }}"
+      loop: "{{ risks }}"
+      loop_control:
+        label: "{{ item.id }}"
+
+    - name: Ensure reports directory exists
+      ansible.builtin.file:
+        path: "{{ playbook_dir }}/reports"
+        state: directory
+        mode: "0700"
+
+    - name: Generate consolidated risk register
+      ansible.builtin.template:
+        src: templates/risk_register.md.j2
+        dest: "{{ playbook_dir }}/reports/risk_register.md"
+        mode: "0600"

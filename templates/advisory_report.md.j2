@@ -1,0 +1,57 @@
+# Cisco Advisory Assessment
+
+## Assessment Information
+
+Date (UTC): {{ now(utc=true, fmt='%Y-%m-%d %H:%M:%S') }}
+
+Device: {{ inventory_hostname }}
+Management IP: {{ ansible_host }}
+
+## Advisory
+
+ID: {{ advisories[0].id }}
+Title: {{ advisories[0].title }}
+Vendor: {{ advisories[0].vendor }}
+
+Source: {{ advisories[0].source }}
+
+## Software Evidence
+
+Expected release: {{ advisories[0].software_release }}
+Release matches: {{ release_matches }}
+
+## Configuration Evidence
+
+PKI trustpoint present: {{ trustpoint_present }}
+HTTPS enabled: {{ https_enabled }}
+
+Commands used:
+- show version
+- show running-config
+
+The running configuration was evaluated in memory.
+Its contents are not included in this report.
+
+## Assessment Decision
+
+Applicability: {{ advisory_status | trim }}
+
+{% if (advisory_status | trim) == 'NOT_APPLICABLE' %}
+Reason: No PKI trustpoint was found in the running configuration.
+
+The prerequisites for FN70489 were not observed.
+Reassess if certificates or certificate-dependent services are configured.
+{% else %}
+Reason: Further manual verification is required.
+
+Review the certificate configuration and affected services
+against the Cisco field notice.
+{% endif %}
+
+## Governance
+
+Configuration modified: No
+Remediation authorized: No
+Assessment scope: FN70489 only
+
+This decision does not establish the absence of other vulnerabilities.

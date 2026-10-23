@@ -1,0 +1,48 @@
+# Network Risk Register
+
+Generated (UTC): {{ now(utc=true, fmt='%Y-%m-%d %H:%M:%S') }}
+
+## Assessment Summary
+
+Total findings: {{ risks | length }}
+
+This report uses an internal 4-factor prioritization model.
+It is not an official CVSS assessment.
+
+| ID | Finding | Score | Priority | Approved |
+|---|---|---|---|---|
+{% for risk in risks %}
+{% if risk.impact is none or risk.exposure is none or risk.likelihood is none or risk.criticality is none %}
+| {{ risk.id }} | {{ risk.title }} | Not assessed | Not assessed | {{ risk.approved }} |
+{% else %}
+{% set score = risk.impact + risk.exposure + risk.likelihood + risk.criticality %}
+{% set priority = 'CRITICAL' if score >= 16 else 'HIGH' if score >= 12 else 'MEDIUM' if score >= 8 else 'LOW' %}
+| {{ risk.id }} | {{ risk.title }} | {{ score }}/20 | {{ priority }} | {{ risk.approved }} |
+{% endif %}
+{% endfor %}
+
+## Detailed Findings
+
+{% for risk in risks %}
+### {{ risk.id }} — {{ risk.title }}
+
+- Status: {{ risk.status }}
+- Evidence: {{ risk.evidence }}
+- Owner: {{ risk.owner }}
+- Recommendation: {{ risk.recommendation }}
+- Remediation approved: {{ risk.approved }}
+
+{% if risk.impact is none or risk.exposure is none or risk.likelihood is none or risk.criticality is none %}
+Assessment: Incomplete — additional evidence required.
+{% else %}
+Assessment: All four risk factors have been scored.
+{% endif %}
+
+{% endfor %}
+
+## Governance
+
+- Assessment and remediation are separate activities.
+- An unassessed risk must not be treated as low priority.
+- No configuration changes are authorized by this report.
+- Remediation requires a documented, accountable approval.

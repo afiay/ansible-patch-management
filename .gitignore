@@ -1,0 +1,17 @@
+# Sensitive router configurations
+backups/
+
+# Generated assessment evidence
+reports/
+manifests/
+
+# Credentials and secrets
+.env
+*.pem
+*.key
+vault-password*
+*.retry
+
+# Python
+__pycache__/
+*.pyc

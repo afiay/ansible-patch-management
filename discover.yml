@@ -1,0 +1,41 @@
+---
+- name: Cisco Network Discovery and Backup
+  hosts: cisco_routers
+  gather_facts: false
+  vars:
+    backup_timestamp: "{{ now(utc=true, fmt='%Y%m%d_%H%M%S') }}"
+  tasks:
+    - name: Discover IOS version and interfaces
+      cisco.ios.ios_command:
+        commands:
+          - show version
+          - show ip interface brief
+      register: discovery
+
+    - name: Display discovery summary
+      ansible.builtin.debug:
+        msg:
+          - "{{ discovery.stdout[0].split('\n')[0] }}"
+          - "{{ discovery.stdout[1] }}"
+
+    - name: Collect running configuration
+      cisco.ios.ios_command:
+        commands:
+          - show running-config
+      register: running_config
+      no_log: true
+
+    - name: Create protected backup directory
+      ansible.builtin.file:
+        path: "{{ playbook_dir }}/backups"
+        state: directory
+        mode: "0700"
+      delegate_to: localhost
+
+    - name: Save configuration backup on Ubuntu
+      ansible.builtin.copy:
+        content: "{{ running_config.stdout[0] }}\n"
+        dest: "{{ playbook_dir }}/backups/{{ inventory_hostname }}_{{ backup_timestamp }}.cfg"
+        mode: "0600"
+      delegate_to: localhost
+      no_log: true

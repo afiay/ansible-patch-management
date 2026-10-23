@@ -1,0 +1,38 @@
+---
+- name: Cisco IOS Security Assessment
+  hosts: cisco_routers
+  gather_facts: false
+
+  tasks:
+
+    - name: Collect assessment evidence
+      cisco.ios.ios_command:
+        commands:
+          - show version
+          - show ip interface brief
+          - show ip ssh
+          - show ip route
+      register: assessment
+
+    - name: Display software and SSH information
+      ansible.builtin.debug:
+        msg:
+          router: "{{ inventory_hostname }}"
+          ios_version: "{{ assessment.stdout_lines[0][0] }}"
+          ssh_status: "{{ assessment.stdout_lines[2][0] }}"
+          assessment_status: "Requires vulnerability review"
+          changes_performed: false
+
+    - name: Create assessment report directory
+      ansible.builtin.file:
+        path: "{{ playbook_dir }}/reports"
+        state: directory
+        mode: "0700"
+      delegate_to: localhost
+
+    - name: Generate assessment report
+      ansible.builtin.template:
+        src: templates/assessment.md.j2
+        dest: "{{ playbook_dir }}/reports/{{ inventory_hostname }}_assessment.md"
+        mode: "0600"
+      delegate_to: localhost

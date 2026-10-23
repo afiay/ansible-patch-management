@@ -1,0 +1,8 @@
+---
+advisories:
+  - id: FN70489
+    title: PKI Self-Signed Certificate Expiration
+    vendor: Cisco
+    software_release: "15.3(3)XB12"
+    source: https://www.cisco.com/c/en/us/support/docs/field-notices/704/fn70489.html
+    prerequisite: "A self-signed certificate must be configured and used by an affected service"

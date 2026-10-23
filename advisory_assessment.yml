@@ -1,0 +1,60 @@
+---
+- name: Cisco Advisory Applicability Assessment
+  hosts: cisco_routers
+  gather_facts: false
+
+  vars_files:
+    - vars/advisories.yml
+
+  tasks:
+    - name: Collect IOS and PKI evidence
+      cisco.ios.ios_command:
+        commands:
+          - show version
+          - show running-config
+      register: evidence
+      no_log: true
+
+    - name: Evaluate FN70489 prerequisites
+      ansible.builtin.set_fact:
+        release_matches: >-
+          {{ advisories[0].software_release in evidence.stdout[0] }}
+        trustpoint_present: >-
+          {{ 'crypto pki trustpoint' in evidence.stdout[1] }}
+        https_enabled: >-
+          {{ (evidence.stdout[1] | regex_search('(?m)^ip http secure-server$')) is not none }}
+    - name: Determine preliminary applicability
+      ansible.builtin.set_fact:
+        advisory_status: >-
+          {% if not release_matches | bool %}
+          REQUIRES_REVIEW
+          {% elif not trustpoint_present | bool %}
+          NOT_APPLICABLE
+          {% else %}
+          REQUIRES_REVIEW
+          {% endif %}
+
+    - name: Display advisory assessment
+      ansible.builtin.debug:
+        msg:
+          device: "{{ inventory_hostname }}"
+          advisory: "{{ advisories[0].id }}"
+          release_matches: "{{ release_matches }}"
+          trustpoint_present: "{{ trustpoint_present }}"
+          https_enabled: "{{ https_enabled }}"
+          applicability: "{{ advisory_status | trim }}"
+          router_modified: false
+
+    - name: Ensure reports directory exists
+      ansible.builtin.file:
+        path: "{{ playbook_dir }}/reports"
+        state: directory
+        mode: "0700"
+      delegate_to: localhost
+
+    - name: Save timestamped advisory report
+      ansible.builtin.template:
+        src: templates/advisory_report.md.j2
+        dest: "{{ playbook_dir }}/reports/{{ inventory_hostname }}_{{ advisories[0].id }}_{{ now(utc=true, fmt='%Y%m%d_%H%M%S') }}.md"
+        mode: "0600"
+      delegate_to: localhost

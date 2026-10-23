@@ -1,0 +1,37 @@
+---
+- name: Generate Evidence Integrity Manifest
+  hosts: localhost
+  connection: local
+  gather_facts: false
+
+  tasks:
+    - name: Find backup and report files
+      ansible.builtin.find:
+        paths:
+          - "{{ playbook_dir }}/backups"
+          - "{{ playbook_dir }}/reports"
+        file_type: file
+        recurse: false
+      register: evidence_files
+
+    - name: Calculate SHA256 checksums
+      ansible.builtin.stat:
+        path: "{{ item.path }}"
+        checksum_algorithm: sha256
+        get_mime: false
+      loop: "{{ evidence_files.files }}"
+      loop_control:
+        label: "{{ item.path | basename }}"
+      register: file_hashes
+
+    - name: Create protected manifest directory
+      ansible.builtin.file:
+        path: "{{ playbook_dir }}/manifests"
+        state: directory
+        mode: "0700"
+
+    - name: Generate timestamped manifest
+      ansible.builtin.template:
+        src: templates/manifest.md.j2
+        dest: "{{ playbook_dir }}/manifests/manifest_{{ now(utc=true, fmt='%Y%m%d_%H%M%S') }}.md"
+        mode: "0600"

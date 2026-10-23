@@ -1,0 +1,30 @@
+# Evidence Integrity Manifest
+
+Generated (UTC): {{ now(utc=true, fmt='%Y-%m-%d %H:%M:%S') }}
+
+## Summary
+
+Evidence files: {{ file_hashes.results | length }}
+Hash algorithm: SHA-256
+
+## Evidence Inventory
+
+{% for result in file_hashes.results %}
+### {{ result.item.path | basename }}
+
+Path: {{ result.item.path }}
+Size: {{ result.stat.size }} bytes
+SHA-256: {{ result.stat.checksum }}
+
+{% endfor %}
+
+## Integrity Statement
+
+This manifest records the SHA-256 fingerprints of the
+backup and report files present when the assessment ran.
+
+The fingerprints can be used to detect subsequent
+modifications to these files.
+
+This manifest is not a digital signature and does not
+independently prove the authenticity of the evidence.
